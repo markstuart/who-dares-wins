@@ -1,5 +1,13 @@
 // We want to wait until the page is loaded so that the form is there to bind the submit listener to.
 window.addEventListener('load', function () {
+  // Initialise firestore
+  var db = firebase.firestore()
+  var entriesCollection = db.collection('entries')
+
+  function storeEntry(entry) {
+    entriesCollection.add(entry)
+  }
+
   function getEntryForm() {
     return document.getElementById('entry_form')
   }
@@ -24,10 +32,9 @@ window.addEventListener('load', function () {
       name: formData.get('name'),
       email: formData.get('email')
     }
-    entries.push(entry)
+
+    storeEntry(entry)
     displayEntry(entry)
-
-
   }
 
   getEntryForm().addEventListener('submit', addEntry);

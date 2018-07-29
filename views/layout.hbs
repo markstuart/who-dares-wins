@@ -5,6 +5,16 @@
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <script src="/reload/reload.js"></script>
     <script src="/javascripts/entries.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "",
+        authDomain: "",
+        projectId: "",
+      };
+      firebase.initializeApp(config);
+    </script>
   </head>
   <body>
     {{{body}}}

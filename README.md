@@ -198,3 +198,46 @@ ol.appendChild(li)
 Try it out, and you should see entries getting added to a numbered list under the form.
 
 Commit your changes.
+
+## Persist the entries
+This is pretty good, but we aren't storing the entries anywhere. If we refresh the page, they're gone. Also, if this application was accessible to other people, when they added their entry we wouldn't see it.
+
+We could do this in many different ways, but in this case we are going to leverage Firestore and the Firebase libraries. Using Firestore will give us responsive data updating, so we will see entries populating on our view of the UI as soon as new entries are received.
+
+We need to set up a Firebase account for this.
+- Go to https://console.firebase.google.com/
+- Make sure you are logged into the Google account that you want to use
+- "Add Project"
+- Choose a project name and follow the steps
+- In the Get Started page, you'll see "Add Firebase to your web app"
+- Click it and follow the steps, putting the items into the head element of `views/layouts.hbs`
+- Click the "Database" item from the left navigation menu
+- Choose "Create database" and "Start in TEST mode"
+
+And we're done!
+
+Leave the firebase console page open on the database area for later.
+
+Let's store the entries in Firestore instead of in memory.
+
+In `entries.js` again, we want to create a reference to the firestore database, and to our `entries` collection.
+
+```js
+window.addEventListener('load', function () {
+  // Initialise firestore
+  var db = firebase.firestore()
+  var entriesCollection = db.collection('entries')
+
+  function storeEntry(entry) {
+    entriesCollection.add(entry)
+  }
+// snip...
+```
+
+Make sure you add a call to `storeEntry` where we were pushing them into an array before.
+
+Once that is set up and `storeEntry` is being called, if you fill out the entry form and submit it, you should see that information appear in the `entries` collection on the firestore console page.
+
+Awesome, a database that we don't really need any setup to use!
+
+May as well commit the current state now.
