@@ -126,10 +126,75 @@ Now, let's start actually building something of our own :D
 ## The Form
 Let's build a form to capture a name and email address for people wanting to put their name in the draw.
 
-Open up `views/index.hbs` and add:
-```html
+Open up `views/index.hbs` and update it like so:
+```hbs
+<h1>{{title}}</h1>
+
+<h2>Enter your name and email to go in the draw</h2>
+<form id="entry_form">
+  <label>
+    Name:
+    <input type="text" name="name">
+  </label>
+  <label>
+    Email:
+    <input type="email" name="email">
+  </label>
+
+  <button type="submit">Enter</button>
+</form>
 ```
 
+You should see a form appear after you save the file.
 
+This is all fine, but if we input anything into this form and hit enter, the page refreshes. In this case, we are going to need to stop that from happening so that we can dynamically update the page with a list of people that are in the draw.
 
+Create a file in the `public/javascripts` directory called `entries.js`, and add a script tag in the head of `views/layout.hbs` that loads the file.
 
+Add the following function to `entries.js`:
+```js
+// We want to wait until the page is loaded so that the form is there to bind the submit listener to.
+window.addEventListener('load', function () {
+  function getEntryForm () {
+    return document.getElementById('entry_form')
+  }
+
+  function addEntry(event) {
+    // Stop the form from reloading the page
+    event.preventDefault()
+
+    var formData = new FormData(getEntryForm())
+    console.log(formData.get('name'), formData.get('email'))
+  }
+
+  getEntryForm().addEventListener('submit', addEntry);
+})
+```
+
+Well, that's a _bit_ better. At least we aren't reloading the page when submitting the form any more. Let's get the entries displaying.
+
+Update the code in `entries.js` to stop logging the form data to the console, and store the name and email for each entry into an array instead. Add a new entry to the array:
+
+`{ name: formData.get('name'), email: formData.get('email') }`
+
+each time a new entry is received.
+
+Now that we have them being added to an array, we should also display them in a list on the page.
+
+Add an Ordered List `<ol id="entry_list"></ol>` under the form.
+
+We can add a new List Item each time an entry is received by getting a reference to the `ol` like we did with the `form`, creating a new `li` with the entry details in it, and appending it to the `ol`.
+
+Something like this:
+```js
+var ol = document.getElementById('entry_list')
+var entryText = document.createTextNode(entry.name + ' (' + entry.email + ')')
+var li = document.createElement('li')
+
+li.appendChild(entryText)
+ol.appendChild(li)
+```
+
+Try it out, and you should see entries getting added to a numbered list under the form.
+
+Commit your changes.
