@@ -241,3 +241,51 @@ Once that is set up and `storeEntry` is being called, if you fill out the entry 
 Awesome, a database that we don't really need any setup to use!
 
 May as well commit the current state now.
+
+## Get Realtime updates
+Now, let's get all the entries showing up as soon as they get added.
+
+In `entries.js` again:
+```js
+window.addEventListener('load', function () {
+  // Initialise firestore
+  var db = firebase.firestore()
+  var entriesCollection = db.collection('entries')
+  listenForEntries()
+
+  function storeEntry(entry) {
+    entriesCollection.add(entry)
+  }
+
+  function listenForEntries() {
+    entriesCollection
+      .onSnapshot(function (querySnapshot) {
+        var entries = querySnapshot.map(function (doc) {
+          return doc.data()
+        })
+        console.log(entries)
+      });
+  }
+  // snip...
+```
+
+So now, instead of displaying the entries as soon as they get submitted in the form, we need to clear the `ol` whenever we get a new array of entries from Firestore, and re-render the entries into the `ol` again.
+
+Note: There are definitely ways to only update the new items in the list on the page instead of re-rendering each time, but that could be a nice enhancement for anyone that wants to try it.
+
+We can clear the `ol` simply by setting it's innerHTML attribute to "". Then we iterate over the entries from Firestore, calling the existing `displayEntry` function. Try it out and see how you go.
+
+Once you've got that working, do a little bit of testing, making sure the entries show up as expected. Notice anything strange? The sort order that they come back in seems rather unintuitive. It appears that it sorts the entries by their automatically assigned ID's in Firestore by default. Let's add a timestamp field to our entry model so we can order by that.
+
+When we store the entry model, we can add a timestamp using the built in Date library.
+
+```
+var now = new Date()
+var timestamp = now.getTime()
+```
+
+`getTime` gives us a unix timestamp with millisecond precision, so we're pretty unlikely to have collisions.
+
+There's a few ways that we can manage the ordering using the timestamp, but the easiest is probably to call `sort()` on the array that we are getting back from Firestore. `Array#sort` takes an optional sort function as the first parameter, which should return 1, 0, or -1 for greater, equal, or less than (respectively). See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort for more info.
+
+When you have the entries displaying in the order they were provided, commit your changes.
