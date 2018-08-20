@@ -289,3 +289,27 @@ var timestamp = now.getTime()
 There's a few ways that we can manage the ordering using the timestamp, but the easiest is probably to call `sort()` on the array that we are getting back from Firestore. `Array#sort` takes an optional sort function as the first parameter, which should return 1, 0, or -1 for greater, equal, or less than (respectively). See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort for more info.
 
 When you have the entries displaying in the order they were provided, commit your changes.
+
+## Who actually wins??
+
+We have the ability to receive entries, so lets use that data to figure out who wins.
+
+This is probably the core logic in our app, so we should definitely test it. Download the test file from https://gist.github.com/markstuart/56bfaacada5f8c58bee68747ef1b433d, and edit the random function in there until the test passes.
+
+Create a function in `entries.js` that randomly chooses one of the entries and returns it.
+
+Add a button to `views/index.hbs` and bind a function to the click on that button that chooses an entry and displays a "Congratulations <entry.name>, you have won a Frontend Masters subscription!" message.
+
+Commit the final part of this tutorial.
+
+## Is that it?
+
+We have built a functional website that can persist some data, display it, and perform a calculation over that dataset.
+
+But the site is *VERY* basic. Some ideas for enhancements are:
+- Add some styling
+- Add a way to reset the entries after a draw
+- Add admin authentication so that only admins can run the draw/reset the entries
+- Use Babel or similar to enable us to rewrite `entries.js` in ES6 style
+- Use a lightweight client side framework instead of native javascript to render the list of entries (Vue.js?)
+- What can you think of?

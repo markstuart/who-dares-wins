@@ -5,6 +5,8 @@ window.addEventListener('load', function () {
   var entriesCollection = db.collection('entries')
   listenForEntries()
 
+  var allEntries = []
+
   function storeEntry(entry) {
     entry.timestamp = (new Date()).getTime()
     entriesCollection.add(entry)
@@ -21,7 +23,13 @@ window.addEventListener('load', function () {
             return prev.timestamp > next.timestamp ? 1 : -1
           })
         displayEntries(entries)
+        allEntries = entries
       });
+  }
+
+  function pickAWinner() {
+    var randomInteger = Math.floor(Math.random() * allEntries.length)
+    return allEntries[randomInteger];
   }
 
   function getEntryForm() {
@@ -32,7 +40,7 @@ window.addEventListener('load', function () {
     var ol = document.getElementById('entry_list')
     ol.innerHTML = ''
     entries.forEach(function (entry) {
-      displayEntry(entry, ol);
+      displayEntry(entry, ol)
     })
   }
 
@@ -57,5 +65,18 @@ window.addEventListener('load', function () {
     storeEntry(entry)
   }
 
-  getEntryForm().addEventListener('submit', addEntry);
+  function getDrawButton() {
+    return document.getElementById('draw')
+  }
+
+  function showWinner() {
+    var winner = pickAWinner()
+    if (winner) {
+      var winningMessage = 'Congratulations ' + winner.name + ', you have won a Frontend Masters subscription!'
+      document.getElementById('winner').innerText = winningMessage
+    }
+  }
+
+  getEntryForm().addEventListener('submit', addEntry)
+  getDrawButton().addEventListener('click', showWinner)
 })
