@@ -25,7 +25,7 @@ First, open a terminal shell so that you have access to the command line.
 
 We're going to use [Express](https://expressjs.com/) as our server, so go ahead and install the express app generator cli tool:
 
-`npm install -g express-generator`
+`npm install --global express-generator`
 
 For those of you unfamiliar with npm, that command asks npm to install the latest version of the [express-generator](https://www.npmjs.com/package/express-generator) package as a *global* package.
 
@@ -50,7 +50,7 @@ The output from the generator should give us some commands to use next:
 - `npm install` to install the packages (dependencies) required to run the server
 - `DEBUG=who-dares-wins:* npm start` to run the server for the first time
 
-The generator kindly creates an index page for our website, so if we open up [localhost:3000](http://localhost:3000) in a browser, we should see this page showing up.
+The generator kindly creates an index page for our website, so if we open up [localhost:3000](http://localhost:3000) in a browser, we should see that generated page.
 
 Let's check in the initial state of the application, so that we have a baseline in version control history:
 - `git init` initialises git in the current folder so that it is able to track changes on all files in the folder and subfolders
@@ -99,7 +99,7 @@ The DEBUG flag increases the logging output of the server, and is handy for deve
 
 The `--ext` option for `nodemon` tells it which file types to care about changes to.
 
-Kill your current server and restart with `npm start:dev`. Now, every time you save a file in your editor, you should see the server restart in the terminal.
+Kill your current server and restart with `npm run start:dev`. Now, every time you save a file in your editor, you should see the server restart in the terminal.
 
 ### Setting up reload
 Open `app.js` in your editor. This file contains the core setup of your Express server, including defining routes and middleware.
@@ -114,7 +114,7 @@ Finally, in `views/layout.hbs` we add the script tag as described in the reload 
 
 I recommend having a look at the documentation for the reload library if you are interested in understanding what exactly is going on here.
 
-Kill the server and start it again with `npm run start:dev`, make a change to a file and save it, and watch the server restart AND the browser refresh all by itself.
+Kill the server and start it again with `npm run start:dev`, refresh the browser once to ensure the reload library sets up the websocket connection, make a change to a file and save it, and watch the server restart AND the browser refresh all by itself.
 
 Commit the changes once you're happy:
 - `git status` and review the changed files
@@ -171,15 +171,11 @@ window.addEventListener('load', function () {
 })
 ```
 
+In the `views/layouts.hbs` file, add a script tag (similar to the one we added for the reload library) that loads our new script from the server.
+
 Well, that's a _bit_ better. At least we aren't reloading the page when submitting the form any more. Let's get the entries displaying.
 
-Update the code in `entries.js` to stop logging the form data to the console, and store the name and email for each entry into an array instead. Add a new entry to the array:
-
-`{ name: formData.get('name'), email: formData.get('email') }`
-
-each time a new entry is received.
-
-Now that we have them being added to an array, we should also display them in a list on the page.
+Update the code in `entries.js` to stop logging the form data to the console, and display them in a list on the page instead.
 
 Add an Ordered List `<ol id="entry_list"></ol>` under the form.
 
@@ -187,6 +183,9 @@ We can add a new List Item each time an entry is received by getting a reference
 
 Something like this:
 ```js
+// Create an object/model to represent the entry
+var entry = { name: formData.get('name'), email: formData.get('email') }
+
 var ol = document.getElementById('entry_list')
 var entryText = document.createTextNode(entry.name + ' (' + entry.email + ')')
 var li = document.createElement('li')
@@ -209,9 +208,9 @@ We need to set up a Firebase account for this.
 - Make sure you are logged into the Google account that you want to use
 - "Add Project"
 - Choose a project name and follow the steps
-- In the Get Started page, you'll see "Add Firebase to your web app"
-- Click it and follow the steps, putting the items into the head element of `views/layouts.hbs`
-- Click the "Database" item from the left navigation menu
+- In the Get Started page, you shoud see an icon like this `</>`
+- Click it and copy the scripts, putting the script tags under the `{{{body}}}` in `views/layouts.hbs`
+- Click the "Develop > Database" item from the left navigation menu
 - Choose "Create database" and "Start in TEST mode"
 
 And we're done!
@@ -226,15 +225,16 @@ In `entries.js` again, we want to create a reference to the firestore database, 
 window.addEventListener('load', function () {
   // Initialise firestore
   var db = firebase.firestore()
+  db.settings({ timestampsInSnapshots: true })
   var entriesCollection = db.collection('entries')
 
   function storeEntry(entry) {
     entriesCollection.add(entry)
   }
-// snip...
+  // snip...
 ```
 
-Make sure you add a call to `storeEntry` where we were pushing them into an array before.
+Make sure you add a call to `storeEntry` where you are adding them to the ordered list.
 
 Once that is set up and `storeEntry` is being called, if you fill out the entry form and submit it, you should see that information appear in the `entries` collection on the firestore console page.
 
@@ -250,6 +250,7 @@ In `entries.js` again:
 window.addEventListener('load', function () {
   // Initialise firestore
   var db = firebase.firestore()
+  db.settings({ timestampsInSnapshots: true })
   var entriesCollection = db.collection('entries')
   listenForEntries()
 
@@ -257,10 +258,13 @@ window.addEventListener('load', function () {
     entriesCollection.add(entry)
   }
 
+  // Keep a local cache of the firestore data for easy access
+  var entries = []
+
   function listenForEntries() {
     entriesCollection
       .onSnapshot(function (querySnapshot) {
-        var entries = querySnapshot.map(function (doc) {
+        entries = querySnapshot.docs.map(function (doc) {
           return doc.data()
         })
         console.log(entries)
@@ -273,7 +277,7 @@ So now, instead of displaying the entries as soon as they get submitted in the f
 
 Note: There are definitely ways to only update the new items in the list on the page instead of re-rendering each time, but that could be a nice enhancement for anyone that wants to try it.
 
-We can clear the `ol` simply by setting it's innerHTML attribute to "". Then we iterate over the entries from Firestore, calling the existing `displayEntry` function. Try it out and see how you go.
+We can clear the `ol` simply by setting it's innerHTML attribute to "". Then we iterate over the entries from Firestore, calling your existing function that adds an entry to the `ol`. If you haven't got that "add an entry to the `ol`" functionality extracted to it's own function, now is a good time. Try it out and see how you go.
 
 Once you've got that working, do a little bit of testing, making sure the entries show up as expected. Notice anything strange? The sort order that they come back in seems rather unintuitive. It appears that it sorts the entries by their automatically assigned ID's in Firestore by default. Let's add a timestamp field to our entry model so we can order by that.
 
@@ -294,7 +298,7 @@ When you have the entries displaying in the order they were provided, commit you
 
 We have the ability to receive entries, so lets use that data to figure out who wins.
 
-This is probably the core logic in our app, so we should definitely test it. Download the test file from https://gist.github.com/markstuart/56bfaacada5f8c58bee68747ef1b433d, and edit the random function in there until the test passes.
+This is probably the core logic in our app, so we should definitely test it. Download the test file from https://gist.github.com/markstuart/56bfaacada5f8c58bee68747ef1b433d, and edit the random function in there until the test passes. If you save the file to the root of the project folder, then you should be able to run it with `node ./test-random-function.js` from your already open console.
 
 Create a function in `entries.js` that randomly chooses one of the entries and returns it.
 

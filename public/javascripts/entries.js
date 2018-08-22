@@ -2,49 +2,63 @@
 window.addEventListener('load', function () {
   // Initialise firestore
   var db = firebase.firestore()
+  var settings = { timestampsInSnapshots: true }
+  db.settings(settings)
   var entriesCollection = db.collection('entries')
   listenForEntries()
 
-  var allEntries = []
-
   function storeEntry(entry) {
-    entry.timestamp = (new Date()).getTime()
     entriesCollection.add(entry)
   }
+
+  // Keep a local cache of the firestore data for easy access
+  var entries = []
 
   function listenForEntries() {
     entriesCollection
       .onSnapshot(function (querySnapshot) {
-        var entries = querySnapshot.docs
+        entries = querySnapshot.docs
           .map(function (doc) {
             return doc.data()
           })
-          .sort(function (prev, next) {
-            return prev.timestamp > next.timestamp ? 1 : -1
+          .sort(function (a, b) {
+            return a.timestamp > b.timestamp ? 1 : -1
           })
-        displayEntries(entries)
-        allEntries = entries
+
+        resetEntries()
+
+        entries.forEach(function (entry) {
+          updateEntryList(entry)
+        })
       });
   }
 
+  function getRandomEntry() {
+    var randomIndex = Math.floor(Math.random() * entries.length)
+    return entries[randomIndex]
+  }
+
   function pickAWinner() {
-    var randomInteger = Math.floor(Math.random() * allEntries.length)
-    return allEntries[randomInteger];
+    var winner = getRandomEntry()
+    var winningText = 'Congratulations ' + winner.name + ', you have won a Frontend Masters subscription!'
+    document.getElementById('winner').innerText = winningText
+  }
+
+  function getDrawButton() {
+    return document.getElementById('draw_button')
   }
 
   function getEntryForm() {
     return document.getElementById('entry_form')
   }
 
-  function displayEntries(entries) {
+  function resetEntries() {
     var ol = document.getElementById('entry_list')
-    ol.innerHTML = ''
-    entries.forEach(function (entry) {
-      displayEntry(entry, ol)
-    })
+    ol.innerHTML = ""
   }
 
-  function displayEntry(entry, ol) {
+  function updateEntryList(entry) {
+    var ol = document.getElementById('entry_list')
     var entryText = document.createTextNode(entry.name + ' (' + entry.email + ')')
     var li = document.createElement('li')
 
@@ -57,7 +71,9 @@ window.addEventListener('load', function () {
     event.preventDefault()
 
     var formData = new FormData(getEntryForm())
+    var now = new Date()
     var entry = {
+      timestamp: now.getTime(),
       name: formData.get('name'),
       email: formData.get('email')
     }
@@ -65,18 +81,6 @@ window.addEventListener('load', function () {
     storeEntry(entry)
   }
 
-  function getDrawButton() {
-    return document.getElementById('draw')
-  }
-
-  function showWinner() {
-    var winner = pickAWinner()
-    if (winner) {
-      var winningMessage = 'Congratulations ' + winner.name + ', you have won a Frontend Masters subscription!'
-      document.getElementById('winner').innerText = winningMessage
-    }
-  }
-
-  getEntryForm().addEventListener('submit', addEntry)
-  getDrawButton().addEventListener('click', showWinner)
+  getEntryForm().addEventListener('submit', addEntry);
+  getDrawButton().addEventListener('click', pickAWinner);
 })
